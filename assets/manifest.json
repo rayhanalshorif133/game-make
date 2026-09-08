@@ -1,0 +1,91 @@
+{
+  "frameSizes": {
+    "player_idle": {
+      "width": 128,
+      "height": 145
+    },
+    "player_walk": {
+      "width": 128,
+      "height": 145
+    },
+    "player_hit": {
+      "width": 128,
+      "height": 145
+    },
+    "player_death": {
+      "width": 128,
+      "height": 145
+    },
+    "enemy1_walk": {
+      "width": 128,
+      "height": 145
+    },
+    "enemy1_hit": {
+      "width": 128,
+      "height": 145
+    },
+    "enemy1_death": {
+      "width": 128,
+      "height": 145
+    },
+    "enemy2_walk": {
+      "width": 128,
+      "height": 145
+    },
+    "enemy2_hit": {
+      "width": 128,
+      "height": 145
+    },
+    "enemy2_death": {
+      "width": 128,
+      "height": 145
+    },
+    "enemy3_fly": {
+      "width": 140,
+      "height": 126
+    },
+    "enemy4_walk": {
+      "width": 128,
+      "height": 145
+    },
+    "enemy4_hit": {
+      "width": 128,
+      "height": 145
+    },
+    "enemy4_death": {
+      "width": 128,
+      "height": 145
+    },
+    "weapon_pistol": {
+      "width": 64,
+      "height": 34
+    },
+    "weapon_rifle": {
+      "width": 90,
+      "height": 44
+    },
+    "weapon_shotgun": {
+      "width": 90,
+      "height": 27
+    }
+  },
+  "frameCounts": {
+    "player_idle": 6,
+    "player_walk": 8,
+    "player_hit": 3,
+    "player_death": 10,
+    "enemy1_walk": 8,
+    "enemy1_hit": 3,
+    "enemy1_death": 10,
+    "enemy2_walk": 8,
+    "enemy2_hit": 3,
+    "enemy2_death": 10,
+    "enemy3_fly": 6,
+    "enemy4_walk": 8,
+    "enemy4_hit": 3,
+    "enemy4_death": 10,
+    "weapon_pistol": 1,
+    "weapon_rifle": 1,
+    "weapon_shotgun": 1
+  }
+}
