@@ -1248,22 +1248,45 @@
     );
   }
 
-  function getNearestEnemy() {
-    let nearest = null;
-    let minDist = Infinity;
+  function getSmartTarget() {
+    // 1st Priority: Nearest incoming enemy bullet heading towards player
+    let nearestBullet = null;
+    let minBulletDist = 680;
+
+    for (let i = 0; i < enemyBullets.length; i++) {
+      const eb = enemyBullets[i];
+      const d = Math.hypot(eb.x - player.x, eb.y - player.y);
+      if (d < minBulletDist) {
+        minBulletDist = d;
+        nearestBullet = {
+          x: eb.x,
+          y: eb.y,
+          radius: eb.radius || 8,
+          hp: 1,
+          isBullet: true,
+        };
+      }
+    }
+
+    if (nearestBullet) {
+      return nearestBullet;
+    }
+
+    // 2nd Priority: Nearest enemy
+    let nearestEnemy = null;
+    let minEnemyDist = Infinity;
     for (let i = 0; i < enemies.length; i++) {
       const e = enemies[i];
       if (e.hp <= 0 || e.isDying) continue;
-      // Strictly must be within visible screen viewport
       if (!isEnemyOnScreen(e, 0)) continue;
 
       const d = Math.hypot(e.x - player.x, e.y - player.y);
-      if (d < minDist) {
-        minDist = d;
-        nearest = e;
+      if (d < minEnemyDist) {
+        minEnemyDist = d;
+        nearestEnemy = e;
       }
     }
-    return nearest;
+    return nearestEnemy;
   }
 
   function cycleWeapon() {
@@ -2665,8 +2688,8 @@
     // Cinematic Transition Check: suppress user control & shooting
     const isCinematicTransition = (waveState === 'BOSS_REWARD' || waveState === 'WAVE_ARRIVAL');
 
-    // Update Smart Nearest Enemy
-    lockedEnemy = isCinematicTransition ? null : getNearestEnemy();
+    // Update Smart Nearest Target (1st Priority: incoming enemy bullet, 2nd Priority: enemy)
+    lockedEnemy = isCinematicTransition ? null : getSmartTarget();
     lockReticleTick += dt * 4;
 
     // Movement Inputs (WASD + Virtual Joystick)
@@ -2906,6 +2929,25 @@
       }
 
       let bulletDead = false;
+
+      // Bullet to Bullet Interception (Fire target 1st enemy bullet)
+      for (let ebi = enemyBullets.length - 1; ebi >= 0; ebi--) {
+        const eb = enemyBullets[ebi];
+        const ebDist = Math.hypot(b.x - eb.x, b.y - eb.y);
+        if (ebDist < b.size + eb.radius + 8) {
+          createSparks(b.x, b.y, 12, '#facc15');
+          createSparks(eb.x, eb.y, 8, '#ef4444');
+          SOUNDS.playHit();
+          enemyBullets.splice(ebi, 1);
+          bulletDead = true;
+          break;
+        }
+      }
+
+      if (bulletDead) {
+        bullets.splice(i, 1);
+        continue;
+      }
 
       for (let j = enemies.length - 1; j >= 0; j--) {
         const e = enemies[j];
@@ -4123,18 +4165,19 @@
       CTX.restore();
     });
 
-    // Smart Target Lock Reticle on nearest enemy (World Space)
-    if (lockedEnemy && lockedEnemy.hp > 0 && !lockedEnemy.isDying && isEnemyOnScreen(lockedEnemy, 0) && (autoFireEnabled || aimControl.active || mouse.down)) {
+    // Smart Target Lock Reticle on target (incoming bullet or enemy)
+    if (lockedEnemy && (lockedEnemy.isBullet || (lockedEnemy.hp > 0 && !lockedEnemy.isDying && isEnemyOnScreen(lockedEnemy, 0))) && (autoFireEnabled || aimControl.active || mouse.down)) {
       CTX.save();
       CTX.translate(lockedEnemy.x, lockedEnemy.y);
       CTX.rotate(lockReticleTick);
 
-      const rSize = lockedEnemy.radius + 18;
-      const cornerLen = 14;
+      const rSize = lockedEnemy.radius + (lockedEnemy.isBullet ? 10 : 18);
+      const cornerLen = lockedEnemy.isBullet ? 8 : 14;
 
-      CTX.strokeStyle = '#4ade80';
+      const retColor = lockedEnemy.isBullet ? '#f59e0b' : '#4ade80';
+      CTX.strokeStyle = retColor;
       CTX.lineWidth = 3;
-      CTX.shadowColor = '#4ade80';
+      CTX.shadowColor = retColor;
       CTX.shadowBlur = 12;
 
       // 4 Corner Brackets
