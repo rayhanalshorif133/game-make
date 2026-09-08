@@ -2498,14 +2498,14 @@
       // Check if boss has been eliminated
       if (!waveBoss || waveBoss.hp <= 0 || waveBoss.isDying) {
         waveState = 'BOSS_REWARD';
-        waveCinematicTimer = 3.5; // 3.5s reward collection window
+        waveCinematicTimer = 1.0; // Instant 1s transition window
 
         const rewardX = waveBoss ? waveBoss.x : player.x;
         const rewardY = waveBoss ? waveBoss.y : player.y;
 
         score += 1000 * wave;
         SOUNDS.playNuke();
-        screenShake = 28;
+        screenShake = 10;
         waveBanner = { text: `🎁 BOSS DEFEATED! CLAIM YOUR REWARD! 🏆`, timer: 200 };
         addFloatText(rewardX, rewardY - 120, `+${1000 * wave} BOSS BOUNTY! 🏆`, '#facc15', 38);
 
@@ -2601,7 +2601,7 @@
         // Advance to next wave
         wave++;
         waveState = 'WAVE_ARRIVAL';
-        waveCinematicTimer = 0.85;
+        waveCinematicTimer = 0.35;
 
         // Reposition player smoothly (no teleportation)
         player.vx = 0;
@@ -2632,7 +2632,7 @@
         waveBoss = null;
         portal.active = false;
         portal.particles = [];
-        spawnInterval = Math.max(500, 1400 - (wave - 1) * 60);
+        spawnInterval = Math.max(300, 1400 - (wave - 1) * 60);
       }
     }
     if (waveBanner.timer > 0) waveBanner.timer--;
@@ -3009,6 +3009,33 @@
         }
       }
 
+      // Check collision against obstacle props (large stones/rocks)
+      if (!bulletDead) {
+        const bChunkX = Math.floor(b.x / PROP_CHUNK_SIZE);
+        const bChunkY = Math.floor(b.y / PROP_CHUNK_SIZE);
+        for (let cx = bChunkX - 1; cx <= bChunkX + 1 && !bulletDead; cx++) {
+          for (let cy = bChunkY - 1; cy <= bChunkY + 1 && !bulletDead; cy++) {
+            const cProps = getPropsForChunk(cx, cy);
+            for (let pi = 0; pi < cProps.length; pi++) {
+              const pr = cProps[pi];
+              if (!pr.isObstacle) continue;
+              const pdx = b.x - pr.x;
+              const pdy = b.y - pr.y;
+              if (Math.hypot(pdx, pdy) < pr.obstacleRadius + b.size) {
+                createSparks(b.x, b.y, 8, '#94a3b8');
+                if (b.isExplosive) {
+                  createShockwave(b.x, b.y, '#f97316', b.blastRadius || 150);
+                  createSparks(b.x, b.y, 20, '#fb923c');
+                  SOUNDS.playExplosion(false);
+                }
+                bulletDead = true;
+                break;
+              }
+            }
+          }
+        }
+      }
+
       if (bulletDead || b.life <= 0) {
         bullets.splice(i, 1);
       }
@@ -3027,7 +3054,7 @@
 
     if (now - lastSpawnTime > currentSpawnInterval) {
       lastSpawnTime = now;
-      if (waveState === 'REGULAR') {
+      if (waveState === 'REGULAR' || waveState === 'BOSS_FIGHT') {
         for (let s = 0; s < spawnBatch; s++) {
           spawnEnemy();
         }
@@ -3163,6 +3190,27 @@
       eb.x += eb.vx;
       eb.y += eb.vy;
       eb.life--;
+
+      // Check collision against obstacle props (large stones/rocks cover)
+      const ebChunkX = Math.floor(eb.x / PROP_CHUNK_SIZE);
+      const ebChunkY = Math.floor(eb.y / PROP_CHUNK_SIZE);
+      let hitStone = false;
+      for (let cx = ebChunkX - 1; cx <= ebChunkX + 1 && !hitStone; cx++) {
+        for (let cy = ebChunkY - 1; cy <= ebChunkY + 1 && !hitStone; cy++) {
+          const cProps = getPropsForChunk(cx, cy);
+          for (let pi = 0; pi < cProps.length; pi++) {
+            const pr = cProps[pi];
+            if (!pr.isObstacle) continue;
+            if (Math.hypot(eb.x - pr.x, eb.y - pr.y) < pr.obstacleRadius + eb.radius) {
+              createSparks(eb.x, eb.y, 8, '#94a3b8');
+              enemyBullets.splice(i, 1);
+              hitStone = true;
+              break;
+            }
+          }
+        }
+      }
+      if (hitStone) continue;
 
       if (!player.dead && !isPlayerVanished) {
         const pDist = Math.hypot(eb.x - player.x, eb.y - player.y);
