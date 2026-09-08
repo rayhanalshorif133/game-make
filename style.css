@@ -657,8 +657,8 @@ html, body {
   background: rgba(15, 23, 42, 0.92);
   border: 2px solid rgba(56, 189, 248, 0.5);
   box-shadow: 0 0 35px rgba(56, 189, 248, 0.35), inset 0 0 25px rgba(56, 189, 248, 0.15), 0 25px 60px rgba(0, 0, 0, 0.8);
-  padding: 42px 32px;
-  overflow: hidden;
+  padding: 36px 28px;
+  overflow: hidden !important;
   border-radius: 28px;
   display: flex;
   flex-direction: column;
@@ -774,11 +774,17 @@ html, body {
   width: 90%;
   max-height: 88vh;
   overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7);
   display: flex;
   flex-direction: column;
   gap: 16px;
   animation: popIn 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
+
+.modal-card::-webkit-scrollbar {
+  display: none;
 }
 
 @keyframes popIn {
