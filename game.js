@@ -1955,7 +1955,7 @@
       createShockwave(player.x, player.y, '#eab308', 900);
       addFloatText(player.x, player.y - 70, 'TACTICAL NUKE! 💥', '#eab308', 36);
 
-      // Kill all visible enemies
+      // Kill all visible minion enemies; deal chunk damage to Boss (does NOT insta-delete Boss)
       const camLeft = camera.x - 100;
       const camRight = camera.x + V_WIDTH + 100;
       const camTop = camera.y - 100;
@@ -1964,13 +1964,19 @@
       for (let i = enemies.length - 1; i >= 0; i--) {
         const e = enemies[i];
         if (!e.isDying && e.x >= camLeft && e.x <= camRight && e.y >= camTop && e.y <= camBottom) {
-          const proto = ENEMY_TYPES[e.typeId];
-          kills++;
-          score += proto.score;
-          addFloatText(e.x, e.y - 30, `+${proto.score}`, proto.color, 26);
-          createEnemyDeathFX(e.x, e.y, proto);
-          checkEnemyDrop(e.x, e.y, e);
-          enemies.splice(i, 1);
+          if (e.isWaveBoss) {
+            e.hp -= 400;
+            e.hitTimer = 10;
+            addFloatText(e.x, e.y - 40, '-400 NUKE BLAST!', '#ef4444', 32);
+          } else {
+            const proto = ENEMY_TYPES[e.typeId] || ENEMY_TYPES[1];
+            kills++;
+            score += proto.score;
+            addFloatText(e.x, e.y - 30, `+${proto.score}`, proto.color, 26);
+            createEnemyDeathFX(e.x, e.y, proto);
+            checkEnemyDrop(e.x, e.y, e);
+            enemies.splice(i, 1);
+          }
         }
       }
       updateHUD();
@@ -2492,8 +2498,8 @@
       waveBoss = spawnWaveBoss(wave);
       waveBanner = { text: `⚔️ BOSS DUEL: ${waveBoss.bossName}!`, timer: 140 };
     } else if (waveState === 'BOSS_FIGHT') {
-      // Check if boss has been eliminated
-      if (!waveBoss || waveBoss.hp <= 0 || waveBoss.isDying) {
+      // Boss stays active for infinite time until player actually defeats the boss (hp <= 0)
+      if (waveBoss && (waveBoss.hp <= 0 || waveBoss.isDying)) {
         const rewardX = waveBoss ? waveBoss.x : player.x;
         const rewardY = waveBoss ? waveBoss.y : player.y;
 
