@@ -2336,7 +2336,7 @@
 
     const scale = Math.min(1.48, Math.max(0.92, proto.scale * 1.35 + (currentWave - 1) * 0.025));
     const radius = Math.round(proto.radius * (scale / proto.scale));
-    const speed = Math.min(2.5, Math.max(1.4, proto.speed * 0.85 + currentWave * 0.035));
+    const speed = Math.min(3.2, Math.max(2.0, proto.speed * 1.1 + currentWave * 0.05));
 
     const bossObj = {
       isWaveBoss: true,
@@ -3109,6 +3109,14 @@
           e.x += Math.cos(moveAngle) * e.speed;
           e.y += Math.sin(moveAngle) * e.speed;
         }
+      }
+
+      // Boss always advances toward player at all times even while shooting!
+      if (e.isWaveBoss && !e.isDying && !player.dead && !isPlayerVanished && e.animState === 'shoot') {
+        const bossMoveAngle = Math.atan2(edy, edx);
+        e.x += Math.cos(bossMoveAngle) * e.speed;
+        e.y += Math.sin(bossMoveAngle) * e.speed;
+        e.facingLeft = edx < 0;
       }
 
       // Boss Special Attacks (Seismic shockwaves)
