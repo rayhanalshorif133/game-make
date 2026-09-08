@@ -1034,12 +1034,12 @@
   // --- PROCEDURAL ENVIRONMENT PROPS (ROCKS, METAL BARRICADES, PUDDLES) ---
   const PROP_CHUNK_SIZE = 640;
   const PROP_TYPES = [
-    { key: 'prop_rock_large', scale: 0.45, isObstacle: true, obstacleRadius: 62, shadowRadius: 75, shadowY: 28 },
-    { key: 'prop_rock_medium', scale: 0.50, isObstacle: true, obstacleRadius: 44, shadowRadius: 50, shadowY: 20 },
-    { key: 'prop_broken_metal', scale: 0.45, isObstacle: true, obstacleRadius: 48, shadowRadius: 54, shadowY: 18 },
+    { key: 'prop_rock_large', scale: 0.45, isObstacle: true, obstacleRadius: 70, shadowRadius: 75, shadowY: 28 },
+    { key: 'prop_rock_medium', scale: 0.50, isObstacle: true, obstacleRadius: 55, shadowRadius: 50, shadowY: 20 },
+    { key: 'prop_broken_metal', scale: 0.45, isObstacle: true, obstacleRadius: 52, shadowRadius: 54, shadowY: 18 },
     { key: 'prop_water_puddle', scale: 0.55, isPuddle: true, isObstacle: false, shadowRadius: 0, shadowY: 0 },
-    { key: 'prop_rock_cluster', scale: 0.52, isObstacle: false, shadowRadius: 30, shadowY: 14 },
-    { key: 'prop_rock_small', scale: 0.50, isObstacle: false, shadowRadius: 20, shadowY: 10 },
+    { key: 'prop_rock_cluster', scale: 0.52, isObstacle: true, obstacleRadius: 48, shadowRadius: 30, shadowY: 14 },
+    { key: 'prop_rock_small', scale: 0.50, isObstacle: true, obstacleRadius: 38, shadowRadius: 20, shadowY: 10 },
   ];
 
   const chunkPropsCache = new Map();
@@ -2488,37 +2488,18 @@
         }
       }
     } else if (waveState === 'BOSS_INCOMING') {
-      waveBossCountdown -= dt;
-      if (waveBossCountdown <= 0) {
-        waveState = 'BOSS_FIGHT';
-        waveBoss = spawnWaveBoss(wave);
-        waveBanner = { text: `⚔️ BOSS DUEL: ${waveBoss.bossName}!`, timer: 180 };
-      }
+      waveState = 'BOSS_FIGHT';
+      waveBoss = spawnWaveBoss(wave);
+      waveBanner = { text: `⚔️ BOSS DUEL: ${waveBoss.bossName}!`, timer: 140 };
     } else if (waveState === 'BOSS_FIGHT') {
       // Check if boss has been eliminated
       if (!waveBoss || waveBoss.hp <= 0 || waveBoss.isDying) {
-        waveState = 'BOSS_REWARD';
-        waveCinematicTimer = 1.0; // Instant 1s transition window
-
         const rewardX = waveBoss ? waveBoss.x : player.x;
         const rewardY = waveBoss ? waveBoss.y : player.y;
 
         score += 1000 * wave;
         SOUNDS.playNuke();
-        screenShake = 10;
-        waveBanner = { text: `🎁 BOSS DEFEATED! CLAIM YOUR REWARD! 🏆`, timer: 200 };
-        addFloatText(rewardX, rewardY - 120, `+${1000 * wave} BOSS BOUNTY! 🏆`, '#facc15', 38);
-
-        // Clear all enemy projectiles and eliminate weak minions
-        enemyBullets.length = 0;
-        enemies.forEach((e) => {
-          if (!e.isDying && !e.isWaveBoss) {
-            e.isDying = true;
-            e.animState = 'death';
-            e.animFrame = 0;
-            createEnemyDeathFX(e.x, e.y, ENEMY_TYPES[e.typeId] || ENEMY_TYPES[1]);
-          }
-        });
+        screenShake = 0; // Zero screen shake delay
 
         // --- RANDOM BOSS REWARD SELECTION ---
         const maxTier = wave >= 14 ? 8 : (wave >= 12 ? 7 : (wave >= 10 ? 6 : (wave >= 8 ? 5 : (wave >= 6 ? 4 : (wave >= 4 ? 3 : (wave >= 2 ? 2 : 1))))));
@@ -2552,7 +2533,7 @@
           });
           addFloatText(rewardX, rewardY - 60, '❤️ EXTRA LIFE!', '#ff2a4b', 30);
         } else if (chosenReward === 'CLONE') {
-          // Drop clone powerup (will be 30s when collected as boss reward)
+          // Drop clone powerup (lasts 30s)
           const pInfo = POWERUP_TYPES['CLONE'];
           drops.push({
             x: rewardX + (Math.random() - 0.5) * 80,
@@ -2581,58 +2562,20 @@
           addFloatText(rewardX, rewardY - 60, `⚡ ${pInfo.name}!`, pInfo.color, 30);
         }
 
-        // Golden reward glow shockwave at boss death location
-        createShockwave(rewardX, rewardY, '#facc15', 350);
-        createShockwave(rewardX, rewardY, '#fbbf24', 200);
-        createSparks(rewardX, rewardY, 50, '#facc15');
-        createSparks(rewardX, rewardY, 30, '#ffffff');
-
-        updateHUD();
-      }
-    } else if (waveState === 'BOSS_REWARD') {
-      // Reward collection window — auto-advance after timer or when no boss reward drops remain
-      waveCinematicTimer -= dt;
-
-      // Check if all boss reward drops have been collected
-      const bossRewardDropsLeft = drops.filter(d => d.isBossReward).length;
-      const shouldAdvance = waveCinematicTimer <= 0 || bossRewardDropsLeft === 0;
-
-      if (shouldAdvance) {
-        // Advance to next wave
+        // Instantly advance wave with zero delay!
         wave++;
-        waveState = 'WAVE_ARRIVAL';
-        waveCinematicTimer = 0.35;
-
-        // Reposition player smoothly (no teleportation)
-        player.vx = 0;
-        player.vy = 0;
-
-        if (wave === 15) {
-          waveBanner = { text: 'WAVE 15 - SHADOW CLONE ABILITY UNLOCKED! 👥', timer: 200 };
-        } else if (wave === 18) {
-          waveBanner = { text: 'WAVE 18 - GHOST CLOAK ABILITY UNLOCKED! 👻', timer: 200 };
-        } else {
-          waveBanner = { text: `⚔️ WAVE ${wave} INCOMING! GET READY!`, timer: 180 };
-        }
-
-        SOUNDS.playMeteorLanding();
-        createShockwave(player.x, player.y, '#38bdf8', 440);
-        createSparks(player.x, player.y, 60, '#38bdf8');
-        screenShake = 30;
-        updateHUD();
-      }
-    } else if (waveState === 'WAVE_ARRIVAL') {
-      waveCinematicTimer -= dt;
-      player.vx = 0;
-      player.vy = 0;
-      if (waveCinematicTimer <= 0) {
         waveState = 'REGULAR';
         waveTimer = 0;
         waveRegularKills = 0;
         waveBoss = null;
-        portal.active = false;
-        portal.particles = [];
         spawnInterval = Math.max(300, 1400 - (wave - 1) * 60);
+
+        waveBanner = { text: `⚔️ WAVE ${wave} INCOMING! GET READY!`, timer: 160 };
+        SOUNDS.playMeteorLanding();
+        createShockwave(rewardX, rewardY, '#facc15', 300);
+        createSparks(rewardX, rewardY, 40, '#facc15');
+
+        updateHUD();
       }
     }
     if (waveBanner.timer > 0) waveBanner.timer--;
@@ -2926,6 +2869,36 @@
         });
       }
 
+      // Check collision against obstacle stone props FIRST
+      const bChunkX = Math.floor(b.x / PROP_CHUNK_SIZE);
+      const bChunkY = Math.floor(b.y / PROP_CHUNK_SIZE);
+      let hitStoneB = false;
+      for (let cx = bChunkX - 1; cx <= bChunkX + 1 && !hitStoneB; cx++) {
+        for (let cy = bChunkY - 1; cy <= bChunkY + 1 && !hitStoneB; cy++) {
+          const cProps = getPropsForChunk(cx, cy);
+          for (let pi = 0; pi < cProps.length; pi++) {
+            const pr = cProps[pi];
+            if (!pr.isObstacle) continue;
+            const pdx = b.x - pr.x;
+            const pdy = b.y - (pr.y + (pr.shadowY || 0) * 0.35);
+            if (Math.hypot(pdx, pdy) < pr.obstacleRadius + b.size) {
+              createSparks(b.x, b.y, 8, '#94a3b8');
+              if (b.isExplosive) {
+                createShockwave(b.x, b.y, '#f97316', b.blastRadius || 150);
+                createSparks(b.x, b.y, 20, '#fb923c');
+                SOUNDS.playExplosion(false);
+              }
+              hitStoneB = true;
+              break;
+            }
+          }
+        }
+      }
+      if (hitStoneB) {
+        bullets.splice(i, 1);
+        continue;
+      }
+
       let bulletDead = false;
 
       for (let j = enemies.length - 1; j >= 0; j--) {
@@ -3006,33 +2979,6 @@
             localStorage.setItem('circle_def_high', highScore);
           }
           updateHUD();
-        }
-      }
-
-      // Check collision against obstacle props (large stones/rocks)
-      if (!bulletDead) {
-        const bChunkX = Math.floor(b.x / PROP_CHUNK_SIZE);
-        const bChunkY = Math.floor(b.y / PROP_CHUNK_SIZE);
-        for (let cx = bChunkX - 1; cx <= bChunkX + 1 && !bulletDead; cx++) {
-          for (let cy = bChunkY - 1; cy <= bChunkY + 1 && !bulletDead; cy++) {
-            const cProps = getPropsForChunk(cx, cy);
-            for (let pi = 0; pi < cProps.length; pi++) {
-              const pr = cProps[pi];
-              if (!pr.isObstacle) continue;
-              const pdx = b.x - pr.x;
-              const pdy = b.y - pr.y;
-              if (Math.hypot(pdx, pdy) < pr.obstacleRadius + b.size) {
-                createSparks(b.x, b.y, 8, '#94a3b8');
-                if (b.isExplosive) {
-                  createShockwave(b.x, b.y, '#f97316', b.blastRadius || 150);
-                  createSparks(b.x, b.y, 20, '#fb923c');
-                  SOUNDS.playExplosion(false);
-                }
-                bulletDead = true;
-                break;
-              }
-            }
-          }
         }
       }
 
@@ -3201,7 +3147,9 @@
           for (let pi = 0; pi < cProps.length; pi++) {
             const pr = cProps[pi];
             if (!pr.isObstacle) continue;
-            if (Math.hypot(eb.x - pr.x, eb.y - pr.y) < pr.obstacleRadius + eb.radius) {
+            const pdx = eb.x - pr.x;
+            const pdy = eb.y - (pr.y + (pr.shadowY || 0) * 0.35);
+            if (Math.hypot(pdx, pdy) < pr.obstacleRadius + eb.radius) {
               createSparks(eb.x, eb.y, 8, '#94a3b8');
               enemyBullets.splice(i, 1);
               hitStone = true;
