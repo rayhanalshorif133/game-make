@@ -74,6 +74,12 @@ assets.loadImage('heart_idle', 'Sprites/12-Live and Coins/Big Heart Idle (18x14)
 assets.loadImage('diamond_idle', 'Sprites/12-Live and Coins/Big Diamond Idle (18x14).png');
 assets.loadImage('box_idle', 'Sprites/08-Box/Idle.png');
 
+// Kings & Pigs UI Assets
+assets.loadImage('live_bar', 'Sprites/12-Live and Coins/Live Bar.png');
+assets.loadImage('small_heart', 'Sprites/12-Live and Coins/Small Heart Idle (18x14).png');
+assets.loadImage('small_diamond', 'Sprites/12-Live and Coins/Small Diamond (18x14).png');
+assets.loadImage('numbers', 'Sprites/12-Live and Coins/Numbers (6x8).png');
+
 // Sprite Animation Helper
 class SpriteAnimation {
   constructor(imgKey, frameWidth, frameHeight, frameCount, frameDuration = 100, loop = true) {
@@ -705,7 +711,6 @@ class Game {
       if (e.code === 'KeyJ' || e.code === 'KeyZ') this.input.hammer = false;
     });
 
-    // Mobile / Touch controls listeners
     const addTouchListener = (elementId, inputKey) => {
       const btn = document.getElementById(elementId);
       if (!btn) return;
@@ -810,23 +815,43 @@ class Game {
   }
 
   drawHUD() {
-    this.ctx.fillStyle = '#e74c3c';
-    for (let i = 0; i < this.player.maxHealth; i++) {
-      if (i < this.player.health) {
-        this.ctx.fillStyle = '#e74c3c';
-      } else {
-        this.ctx.fillStyle = '#555';
+    // Kings & Pigs Stylized Live Bar
+    const liveBar = assets.getImage('live_bar');
+    if (liveBar && liveBar.complete && liveBar.naturalWidth > 0) {
+      this.ctx.drawImage(liveBar, 30, 30, 260, 80);
+
+      const smallHeart = assets.getImage('small_heart');
+      if (smallHeart && smallHeart.complete && smallHeart.naturalWidth > 0) {
+        for (let i = 0; i < this.player.health; i++) {
+          this.ctx.drawImage(smallHeart, 0, 0, 18, 14, 110 + (i * 35), 58, 30, 24);
+        }
       }
-      this.ctx.beginPath();
-      this.ctx.arc(60 + (i * 50), 60, 20, 0, Math.PI * 2);
-      this.ctx.fill();
+    } else {
+      // Fallback
+      this.ctx.fillStyle = '#e74c3c';
+      for (let i = 0; i < this.player.health; i++) {
+        this.ctx.beginPath();
+        this.ctx.arc(60 + (i * 50), 60, 20, 0, Math.PI * 2);
+        this.ctx.fill();
+      }
     }
 
-    this.ctx.fillStyle = '#f1c40f';
-    this.ctx.font = 'bold 36px Arial';
+    // Kings & Pigs Stylized Diamond / Score Panel
+    const smallDiamond = assets.getImage('small_diamond');
+    if (smallDiamond && smallDiamond.complete && smallDiamond.naturalWidth > 0) {
+      this.ctx.drawImage(smallDiamond, 0, 0, 18, 14, CANVAS_WIDTH - 280, 45, 45, 35);
+    }
+
+    this.ctx.fillStyle = '#ffffff';
+    this.ctx.font = '900 36px "Courier New", monospace';
     this.ctx.textAlign = 'right';
-    this.ctx.fillText(`SCORE: ${this.score}`, CANVAS_WIDTH - 40, 60);
-    this.ctx.fillText(`HEIGHT: ${Math.floor(this.maxClimbedY / 50)}m`, CANVAS_WIDTH - 40, 110);
+    this.ctx.lineWidth = 4;
+    this.ctx.strokeStyle = '#000000';
+    this.ctx.strokeText(`SCORE: ${this.score}`, CANVAS_WIDTH - 40, 65);
+    this.ctx.fillText(`SCORE: ${this.score}`, CANVAS_WIDTH - 40, 65);
+
+    this.ctx.strokeText(`HEIGHT: ${Math.floor(this.maxClimbedY / 50)}m`, CANVAS_WIDTH - 40, 115);
+    this.ctx.fillText(`HEIGHT: ${Math.floor(this.maxClimbedY / 50)}m`, CANVAS_WIDTH - 40, 115);
   }
 
   render() {
@@ -864,4 +889,4 @@ class Game {
 const game = new Game();
 requestAnimationFrame((t) => game.loop(t));
 
-console.log("Game state UI toggles updated.");
+console.log("Kings & Pigs UI Assets loaded into game.js");
