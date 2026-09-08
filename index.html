@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Hammer Climber - Wall Breaker</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="game-container">
+    <canvas id="gameCanvas" width="1080" height="1920"></canvas>
+
+    <!-- UI Overlay for Start / Game Over -->
+    <div id="ui-overlay">
+      <div id="start-screen" class="screen">
+        <h1 class="game-title">HAMMER CLIMBER</h1>
+        <p class="subtitle">Break walls with your hammer, climb high, outsmart repairing pigs!</p>
+        <button id="start-btn" class="btn">START GAME</button>
+        <div class="instructions">
+          <p><strong>Controls:</strong></p>
+          <p>A / D or ◄ / ► : Move Left / Right</p>
+          <p>W or Space or ▲ : Jump / Climb Up</p>
+          <p>J or Hammer Button : Hammer Attack / Break Wall</p>
+        </div>
+      </div>
+
+      <div id="game-over-screen" class="screen hidden">
+        <h1 class="game-title text-red">GAME OVER</h1>
+        <p id="final-score">Score: 0</p>
+        <p id="final-height">Max Height: 0m</p>
+        <button id="restart-btn" class="btn">PLAY AGAIN</button>
+      </div>
+    </div>
+
+    <!-- On-Screen Touch Controls for Mobile -->
+    <div id="touch-controls">
+      <div class="touch-group left-group">
+        <button id="btn-left" class="touch-btn">◄</button>
+        <button id="btn-right" class="touch-btn">►</button>
+      </div>
+      <div class="touch-group right-group">
+        <button id="btn-jump" class="touch-btn">▲ JUMP</button>
+        <button id="btn-hammer" class="touch-btn action-btn">🔨 HAMMER</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
